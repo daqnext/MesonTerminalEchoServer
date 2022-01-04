@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -42,72 +43,69 @@ func main() {
 	hs.Use(EchoMiddleware.LoggerWithConfig(EchoMiddleware.LoggerConfig{
 		Logger: logger,
 	}))
-	//use recover
+	//use recover to handle panic
 	hs.Use(EchoMiddleware.RecoverWithConfig(EchoMiddleware.RecoverConfig{
-		Logger: logger,
 		OnPanic: func(panic_err interface{}) {
-
+			logger.Errorln(panic_err)
 		},
 	}))
 
-	//////////start transmiting after 10 seconds////////
-	hs.StaticWithPause("/", "assets", IgnoreHeader)
-	hs.SetPauseSeconds(10)
-
 	///////////////////  JSONP //////////////////////
-	hs.GET("/jsonp", func(c echo.Context) error {
-		callback := c.QueryParam("callback")
+	hs.GET("/test1", func(c echo.Context) error {
 		var content struct {
 			Response  string    `json:"response"`
 			Timestamp time.Time `json:"timestamp"`
 			Random    int       `json:"random"`
 		}
-		content.Response = "Sent via JSONP"
+		content.Response = "Response"
 		content.Timestamp = time.Now().UTC()
 		content.Random = rand.Intn(1000)
-		return c.JSONP(http.StatusOK, callback, &content)
+		return c.JSON(http.StatusOK, &content)
 	})
 
-	hs.GET("/jsonp2", func(c echo.Context) error {
-		callback := c.QueryParam("callback")
+	//example panic in handler
+	hs.GET("/test2", func(c echo.Context) error {
 		var content struct {
 			Response  string    `json:"response"`
 			Timestamp time.Time `json:"timestamp"`
 			Random    int       `json:"random"`
 		}
-		content.Response = "Sent via JSONP"
+		content.Response = "Response"
 		content.Timestamp = time.Now().UTC()
 		content.Random = rand.Intn(1000)
+
+		// panic
 		a := 1
-		_ = 1 / (a - 1)
-		return c.JSONP(http.StatusOK, callback, &content)
+		_ = 3/a - 1
+
+		return c.JSON(http.StatusOK, &content)
 	})
 
+	//example request a file in server
 	hs.GET("/sendfiletest/:filename", func(c echo.Context) error {
 		name := c.Param("filename")
 		needSavedHeader := true
 		err := EchoServer.FileWithPause(hs, c, "assets/"+name, needSavedHeader, IgnoreHeader)
 		if err != nil {
-			logger.Debugln("file not found")
-			//file missing
-			//notice server
+			log.Println("file not found")
 		}
 		return err
 	})
 
+	//example a cdn file request http://127.0.0.1:8080/api/cdn/somefile/path/filename.jpg?randkey=123456
 	hs.GET("/api/cdn/*", func(c echo.Context) error {
 		//get bindname
 		rPath := c.Param("*")
-		logger.Debugln(rPath)
+		log.Println(rPath)
 		s := strings.SplitN(rPath, "/", 2)
 		for i, v := range s {
-			logger.Debugln(i, v)
+			log.Println(i, v)
 		}
 		if len(s) < 1 {
 			return c.String(200, "url Error:"+c.Request().RequestURI)
 		}
 		bindName := s[0]
-		logger.Debugln("bindname", bindName)
+		log.Println("bindname", bindName)
 		if bindName == "" {
 			return c.String(200, "url Error:"+c.Request().RequestURI)
 		}
@@ -115,48 +113,43 @@ func main() {
 		if len(s) > 1 && s[1] != "" {
 			fileName = s[1]
 		}
-		logger.Debugln("fileName", fileName)
-
-		//logger.Debugln("referer",c.Request().Header["Referer"])
-		//r,_:=url.Parse(c.Request().Header["Referer"][0])
-		//logger.Debugln(r)
+		log.Println("fileName", fileName)
 
 		return c.String(200, c.Request().RequestURI)
 	})
 
+	//example request http://127.0.0.1:8080/somefile/path/filename.jpg?randkey=123456
 	hs.GET("*", func(c echo.Context) error {
+		//uri
 		uri := c.Request().RequestURI
 		if uri == "/" {
 			uri = "/index.html"
 		}
-		logger.Debugln(uri)
+		log.Println("uri=", uri)
+		// output: uri= /somefile/path/filename.jpg?randkey=123456
 
-		//logger.Debugln("referer",c.Request().Header["Referer"])
-		//r,_:=url.Parse(c.Request().Header["Referer"][0])
-		//logger.Debugln(r)
+		//path
+		log.Println("path=", c.Param("*"))
+		// output: path= somefile/path/filename.jpg
+
+		//param
+		log.Println("QueryParam randkey=", c.QueryParam("randkey"))
+		// output: QueryParam randkey= 123456
 
 		return c.String(200, uri)
 	})
 
 	hs.GET("/test/:bindname/*", func(c echo.Context) error {
 		bindName := c.Param("bindname")
-		logger.Debugln(bindName)
+		log.Println(bindName)
 		uri := c.Request().RequestURI
 		filePath := strings.Trim(uri, "/test/"+c.Param("bindname"))
-		logger.Debugln(filePath)
-
-		//logger.Debugln("referer",c.Request().Header["Referer"])
-		//r,_:=url.Parse(c.Request().Header["Referer"][0])
-		//logger.Debugln(r)
+		log.Println(filePath)
 
 		return c.String(200, uri)
 	})
 
-	hs.GET("/test200301", func(c echo.Context) error {
-		c.Response().Header().Add("location", "https://www.baidu.com")
-		return c.HTML(302, "")
-	})
-
+	//post test
 	hs.POST("/testpost", func(c echo.Context) error {
 		var ts testStruct
 		if err := c.Bind(&ts); err != nil {
@@ -170,11 +163,13 @@ func main() {
 
 	hs.Server.SetKeepAlivesEnabled(false)
 
+	//start echo server
 	errCh := make(chan error)
 	go func() {
 		errCh <- hs.Start(":8080")
 	}()
 
+	//check start
 	err := hs.WaitForServerStart(false)
 	if err != nil {
 		logger.Debugln(err)
@@ -182,5 +177,4 @@ func main() {
 	logger.Infoln("echo server started")
 
 	time.Sleep(1 * time.Hour)
-
 }

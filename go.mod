@@ -5,9 +5,9 @@ go 1.17
 require (
 	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo/v4 v4.6.1
-	github.com/universe-30/EchoMiddleware v0.0.0-20220104053955-94cdadfac0ad
-	github.com/universe-30/LogrusULog v0.1.16
-	github.com/universe-30/ULog v0.1.14
+	github.com/universe-30/EchoMiddleware v0.1.2
+	github.com/universe-30/LogrusULog v0.1.17
+	github.com/universe-30/ULog v0.1.15
 )
 
 require (
