@@ -35,8 +35,8 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/universe-30/EchoMiddleware v0.1.2 h1:9RB4DJnPC+YAdwtdaIAYzoOG8OWQqMHzQQHe6ABiatY=
-github.com/universe-30/EchoMiddleware v0.1.2/go.mod h1:MK42oPTxt+v/9ld6UKCGWQuoXNhNNLYLZVoMyYtIOpk=
+github.com/universe-30/EchoMiddleware v0.1.4 h1:kENuvHiH39xuYQOk7J+ssG53sLGaS8dapkUXptQYKAo=
+github.com/universe-30/EchoMiddleware v0.1.4/go.mod h1:MK42oPTxt+v/9ld6UKCGWQuoXNhNNLYLZVoMyYtIOpk=
 github.com/universe-30/LogrusULog v0.1.17 h1:yNY0YCmy+d68ALy2yJTho5Y9oOsqTuT84kEU4u4lVnA=
 github.com/universe-30/LogrusULog v0.1.17/go.mod h1:89LdmRb1S5ZuCGL45aOyAACLMED6ZgvXAj3eficMyx4=
 github.com/universe-30/ULog v0.1.15 h1:t1Pafz50IDJfr7K1O/A9+x82ju69WMZIRnhirPYOgT0=

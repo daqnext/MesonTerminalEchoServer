@@ -22,7 +22,7 @@ type testStruct struct {
 
 func main() {
 	logger, _ := LogrusULog.New("./logs", 2, 20, 30)
-	logger.SetLevel(ULog.DebugLevel)
+	logger.SetLevel(ULog.InfoLevel)
 
 	var IgnoreHeader = map[string]struct{}{
 		"Content-Length":              {},
@@ -39,9 +39,10 @@ func main() {
 
 	//use jsoniter
 	hs.UseJsoniter()
-	//log request info
+	//log request info in Debug level
 	hs.Use(EchoMiddleware.LoggerWithConfig(EchoMiddleware.LoggerConfig{
-		Logger: logger,
+		Logger:            logger,
+		RecordFailRequest: true, // log failed request with Error
 	}))
 	//use recover to handle panic
 	hs.Use(EchoMiddleware.RecoverWithConfig(EchoMiddleware.RecoverConfig{
@@ -50,7 +51,7 @@ func main() {
 		},
 	}))
 
-	///////////////////  JSONP //////////////////////
+	///////////// api //////////
 	hs.GET("/test1", func(c echo.Context) error {
 		var content struct {
 			Response  string    `json:"response"`
