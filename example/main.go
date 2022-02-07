@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bufio"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +22,36 @@ type testStruct struct {
 	Somestring string  `json:"somestring"`
 	Someint    int     `json:"someint"`
 	Somefloat  float64 `json:"somefloat"`
+}
+
+func readHeader(filePath string) (map[string][]string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	buf := bufio.NewReader(f)
+	header := map[string][]string{}
+	for {
+		//key
+		key, _, err := buf.ReadLine()
+		if err != nil {
+			if err == io.EOF { //read end
+				return header, nil
+			}
+			return nil, err
+		}
+		//value count
+		countStr, _, err := buf.ReadLine()
+		count, err := strconv.Atoi(string(countStr))
+		if count <= 0 {
+			continue
+		}
+		header[string(key)] = []string{}
+		for i := 0; i < count; i++ {
+			value, _, _ := buf.ReadLine()
+			header[string(key)] = append(header[string(key)], string(value))
+		}
+	}
 }
 
 func main() {
@@ -52,6 +86,11 @@ func main() {
 	}))
 
 	///////////// api //////////
+	hs.GET("/redirect", func(c echo.Context) error {
+
+		return c.Redirect(http.StatusTemporaryRedirect, "http://127.0.0.1:8080/somefile/some/aaa.jpg#randkey=123456")
+	})
+
 	hs.GET("/test1", func(c echo.Context) error {
 		var content struct {
 			Response  string    `json:"response"`
@@ -77,7 +116,7 @@ func main() {
 
 		// panic
 		a := 1
-		_ = 3/a - 1
+		_ = 3 / (a - 1)
 
 		return c.JSON(http.StatusOK, &content)
 	})
@@ -85,8 +124,11 @@ func main() {
 	//example request a file in server
 	hs.GET("/sendfiletest/:filename", func(c echo.Context) error {
 		name := c.Param("filename")
-		needSavedHeader := true
-		err := EchoServer.FileWithPause(hs, c, "assets/"+name, needSavedHeader, IgnoreHeader)
+		header, err := readHeader("assets/" + name + ".header")
+		if err != nil {
+			log.Println("readHeader error", err)
+		}
+		err = EchoServer.FileWithPause(hs, c, "assets/"+name, header, IgnoreHeader)
 		if err != nil {
 			log.Println("file not found")
 		}
@@ -121,6 +163,7 @@ func main() {
 
 	//example request http://127.0.0.1:8080/somefile/path/filename.jpg?randkey=123456
 	hs.GET("*", func(c echo.Context) error {
+
 		//uri
 		uri := c.Request().RequestURI
 		if uri == "/" {
@@ -129,12 +172,17 @@ func main() {
 		log.Println("uri=", uri)
 		// output: uri= /somefile/path/filename.jpg?randkey=123456
 
+		//
+
+		//host
+		log.Println("host=", c.Request().Host)
+
 		//path
 		log.Println("path=", c.Param("*"))
 		// output: path= somefile/path/filename.jpg
 
 		//param
-		log.Println("QueryParam randkey=", c.QueryParam("randkey"))
+		log.Println("QueryParam randkey=", c.QueryParam("b"))
 		// output: QueryParam randkey= 123456
 
 		return c.String(200, uri)

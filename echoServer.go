@@ -6,12 +6,12 @@ import (
 	"io"
 	"net"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	echoTool "github.com/universe-30/EchoMiddleware/tool"
 )
 
 type HttpServer struct {
@@ -25,7 +25,7 @@ func New() (hs *HttpServer) {
 }
 
 func (hs *HttpServer) UseJsoniter() {
-	hs.JSONSerializer = NewJsoniter()
+	hs.JSONSerializer = echoTool.NewJsoniter()
 }
 
 func (hs *HttpServer) SetPauseSeconds(secs int64) {
@@ -36,33 +36,54 @@ func (hs *HttpServer) GetPauseMoment() int64 {
 	return hs.PauseMoment
 }
 
-func FileWithPause(hs *HttpServer, c echo.Context, file string, needSavedHeader bool, ignoreHeaderMap map[string]struct{}) (err error) {
-	f, err := os.Open(file)
+func FileWithPause(hs *HttpServer, c echo.Context, filePath string, header map[string][]string, ignoreHeaderMap map[string]struct{}) (err error) {
+	f, err := os.Open(filePath)
 	if err != nil {
 		return echo.NotFoundHandler(c)
 	}
 	defer f.Close()
-
 	fi, _ := f.Stat()
-	if fi.IsDir() {
-		file = filepath.Join(file, "index.html")
-		f, err = os.Open(file)
-		if err != nil {
-			return echo.NotFoundHandler(c)
+
+	for headerKey, headerValue := range header {
+		_, exist := ignoreHeaderMap[headerKey]
+		if exist {
+			continue
 		}
-		defer f.Close()
-		if fi, err = f.Stat(); err != nil {
-			return
+		for _, v := range headerValue {
+			c.Response().Header().Add(headerKey, v)
 		}
 	}
-
-	if needSavedHeader {
-		AddHeader(c, file+".header", ignoreHeaderMap)
-	}
-
 	ServeContent(hs, c.Response(), c.Request(), fi.Name(), fi.ModTime(), f)
 	return
 }
+
+//func FileWithPause(hs *HttpServer, c echo.Context, filePath string, needSavedHeader bool, ignoreHeaderMap map[string]struct{}) (err error) {
+//	f, err := os.Open(filePath)
+//	if err != nil {
+//		return echo.NotFoundHandler(c)
+//	}
+//	defer f.Close()
+//
+//	fi, _ := f.Stat()
+//	if fi.IsDir() {
+//		filePath = filepath.Join(filePath, "index.html")
+//		f, err = os.Open(filePath)
+//		if err != nil {
+//			return echo.NotFoundHandler(c)
+//		}
+//		defer f.Close()
+//		if fi, err = f.Stat(); err != nil {
+//			return
+//		}
+//	}
+//
+//	if needSavedHeader {
+//		AddHeader(c, filePath+".header", ignoreHeaderMap)
+//	}
+//
+//	ServeContent(hs, c.Response(), c.Request(), fi.Name(), fi.ModTime(), f)
+//	return
+//}
 
 func (hs *HttpServer) CloseServer() {
 	hs.Close()
@@ -110,15 +131,15 @@ func AddHeader(c echo.Context, filePath string, ignoreHeaderMap map[string]struc
 			}
 			return err
 		}
+		_, exist := ignoreHeaderMap[string(key)]
+		if exist {
+			continue
+		}
 		//value count
 		countStr, _, err := buf.ReadLine()
 		count, err := strconv.Atoi(string(countStr))
 		for i := 0; i < count; i++ {
 			value, _, _ := buf.ReadLine()
-			_, exist := ignoreHeaderMap[string(key)]
-			if exist {
-				continue
-			}
 			c.Response().Header().Add(string(key), string(value))
 		}
 	}

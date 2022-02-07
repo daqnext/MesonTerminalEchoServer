@@ -3,7 +3,6 @@ module github.com/daqnext/MesonTerminalEchoServer
 go 1.17
 
 require (
-	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/universe-30/EchoMiddleware v0.1.4
 	github.com/universe-30/LogrusULog v0.1.17
@@ -12,6 +11,7 @@ require (
 
 require (
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.9 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
