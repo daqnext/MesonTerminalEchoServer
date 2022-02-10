@@ -92,6 +92,9 @@ func main() {
 	})
 
 	hs.GET("/test1", func(c echo.Context) error {
+		sign := c.Request().Header.Get("Signature")
+		log.Println(sign)
+
 		var content struct {
 			Response  string    `json:"response"`
 			Timestamp time.Time `json:"timestamp"`
